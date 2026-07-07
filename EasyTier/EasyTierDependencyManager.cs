@@ -66,12 +66,14 @@ internal static class EasyTierDependencyManager
     {
         var urls = new[]
         {
+            $"https://github.com/EasyTier/EasyTier/releases/download/v{EasyTierMetadata.CurrentEasyTierVer}/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip",
             $"https://staticassets.naids.com/resources/PCLNex/static/easytier/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip",
             $"https://s3.pysio.online/PCL2-Nex/static/easytier/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip"
         };
 
         Exception? lastError = null;
         using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("PCL.EasyTierPlugin/1.0");
 
         foreach (var url in urls)
         {

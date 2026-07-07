@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -14,6 +15,18 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
 {
     private readonly HashSet<FrameworkElement> _hookedToolsPages = [];
     private readonly HashSet<FrameworkElement> _hookedSettingsPages = [];
+
+    public FrameworkElement CreateToolsPage(Func<FrameworkElement> pageFactory)
+    {
+        if (IsPluginManagementPreviewCall()) return CreatePreviewPanel(Text("EasyTier.Plugin.ToolsPreview", "请从 工具 -> 大厅 进入 EasyTier 联机大厅。"));
+        return HookToolsPage(pageFactory());
+    }
+
+    public FrameworkElement CreateSettingsPage(Func<FrameworkElement> pageFactory)
+    {
+        if (IsPluginManagementPreviewCall()) return CreatePreviewPanel(Text("EasyTier.Plugin.SettingsPreview", "请从 设置 -> 联机 管理 EasyTier 联机配置。"));
+        return HookSettingsPage(pageFactory());
+    }
 
     public FrameworkElement HookToolsPage(FrameworkElement page)
     {
@@ -66,7 +79,7 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
         await InvokeOnUiAsync(() =>
         {
             if (page.FindName("BtnNatTest") is UIElement button) button.IsEnabled = false;
-            SetText(page, "LabNatType", context.Host.Core.Localize("Tools.GameLink.Nat.Testing", "正在测试"));
+            SetText(page, "LabNatType", Text("Tools.GameLink.Nat.Testing", "正在测试"));
         }).ConfigureAwait(false);
 
         try
@@ -76,13 +89,13 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
             {
                 if (status is null)
                 {
-                    SetText(page, "LabNatType", context.Host.Core.Localize("Tools.GameLink.Nat.Failed", "测试失败"));
-                    context.Host.Core.Hint(context.Host.Core.Localize("Setup.GameLink.NetworkTest.Failed", "网络测试失败。"), PluginHintType.Error);
+                    SetText(page, "LabNatType", Text("Tools.GameLink.Nat.Failed", "测试失败"));
+                    context.Host.Core.Hint(Text("Setup.GameLink.NetworkTest.Failed", "网络测试失败。"), PluginHintType.Error);
                     return;
                 }
 
                 SetText(page, "LabNatType", string.Format(
-                    context.Host.Core.Localize("Tools.GameLink.Nat.Result", "UDP: {0}, TCP: {1}"),
+                    Text("Tools.GameLink.Nat.Result", "UDP: {0}, TCP: {1}"),
                     GetNatTypeString(status.UdpNatType),
                     GetNatTypeString(status.TcpNatType)));
             }).ConfigureAwait(false);
@@ -92,8 +105,8 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
             log.Warn("Failed to run EasyTier network test.", ex);
             await InvokeOnUiAsync(() =>
             {
-                SetText(page, "LabNatType", context.Host.Core.Localize("Tools.GameLink.Nat.Failed", "测试失败"));
-                context.Host.Core.Hint(context.Host.Core.Localize("Setup.GameLink.NetworkTest.Failed", "网络测试失败。"), PluginHintType.Error);
+                SetText(page, "LabNatType", Text("Tools.GameLink.Nat.Failed", "测试失败"));
+                context.Host.Core.Hint(Text("Setup.GameLink.NetworkTest.Failed", "网络测试失败。"), PluginHintType.Error);
             }).ConfigureAwait(false);
         }
         finally
@@ -112,7 +125,7 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
             if (page.FindName("BtnNetTest") is Control button)
             {
                 button.IsEnabled = false;
-                button.SetValue(ContentControl.ContentProperty, context.Host.Core.Localize("Setup.GameLink.NetworkTest.Testing", "正在测试"));
+                button.SetValue(ContentControl.ContentProperty, Text("Setup.GameLink.NetworkTest.Testing", "正在测试"));
             }
         }).ConfigureAwait(false);
 
@@ -123,28 +136,28 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
             {
                 if (status is null)
                 {
-                    context.Host.Core.Hint(context.Host.Core.Localize("Setup.GameLink.NetworkTest.Failed", "网络测试失败。"), PluginHintType.Error);
+                    context.Host.Core.Hint(Text("Setup.GameLink.NetworkTest.Failed", "网络测试失败。"), PluginHintType.Error);
                     return;
                 }
 
                 SetText(page, "TextUdpNatType", string.Format(
-                    context.Host.Core.Localize("Setup.GameLink.NetworkTest.UdpNatType", "UDP NAT 类型: {0}"),
+                    Text("Setup.GameLink.NetworkTest.UdpNatType", "UDP NAT 类型: {0}"),
                     GetNatTypeString(status.UdpNatType)));
                 SetText(page, "TextTcpNatType", string.Format(
-                    context.Host.Core.Localize("Setup.GameLink.NetworkTest.TcpNatType", "TCP NAT 类型: {0}"),
+                    Text("Setup.GameLink.NetworkTest.TcpNatType", "TCP NAT 类型: {0}"),
                     GetNatTypeString(status.TcpNatType)));
                 SetText(page, "TextIpv6Status", string.Format(
-                    context.Host.Core.Localize("Setup.GameLink.NetworkTest.Ipv6Status", "IPv6: {0}"),
+                    Text("Setup.GameLink.NetworkTest.Ipv6Status", "IPv6: {0}"),
                     status.SupportIPv6
-                        ? context.Host.Core.Localize("Setup.GameLink.NetworkTest.Supported", "支持")
-                        : context.Host.Core.Localize("Setup.GameLink.NetworkTest.Unsupported", "不支持")));
+                        ? Text("Setup.GameLink.NetworkTest.Supported", "支持")
+                        : Text("Setup.GameLink.NetworkTest.Unsupported", "不支持")));
             }).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             log.Warn("Failed to run EasyTier network test.", ex);
             await InvokeOnUiAsync(() => context.Host.Core.Hint(
-                context.Host.Core.Localize("Setup.GameLink.NetworkTest.Failed", "网络测试失败。"),
+                Text("Setup.GameLink.NetworkTest.Failed", "网络测试失败。"),
                 PluginHintType.Error)).ConfigureAwait(false);
         }
         finally
@@ -154,7 +167,7 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
                 if (page.FindName("BtnNetTest") is Control button)
                 {
                     button.IsEnabled = true;
-                    button.SetValue(ContentControl.ContentProperty, context.Host.Core.Localize("Setup.GameLink.NetworkTest.Start", "开始测试"));
+                    button.SetValue(ContentControl.ContentProperty, Text("Setup.GameLink.NetworkTest.Start", "开始测试"));
                 }
             }).ConfigureAwait(false);
         }
@@ -193,7 +206,7 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
 
     private string GetNatTypeString(CliNetTest.NatType type)
     {
-        return context.Host.Core.Localize(type switch
+        var key = type switch
         {
             CliNetTest.NatType.OpenInternet or CliNetTest.NatType.NoPat => "Link.Nat.Type.Open",
             CliNetTest.NatType.FullCone => "Link.Nat.Type.FullCone",
@@ -204,7 +217,38 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
             CliNetTest.NatType.SymmetricFirewall => "Link.Nat.Type.SymmetricFirewall",
             CliNetTest.NatType.UdpBlocked => "Link.Nat.Type.UdpBlocked",
             _ => "Link.Nat.Type.Unknown"
-        }, type.ToString());
+        };
+
+        return Text(key, CliNetTest.GetNatTypeString(type));
+    }
+
+    private string Text(string key, string fallback)
+    {
+        var value = context.Host.Core.Localize(key, fallback);
+        return string.IsNullOrWhiteSpace(value) || string.Equals(value, key, StringComparison.Ordinal) ? fallback : value;
+    }
+
+    private static bool IsPluginManagementPreviewCall()
+    {
+        foreach (var frame in new StackTrace().GetFrames() ?? [])
+        {
+            var typeName = frame.GetMethod()?.DeclaringType?.FullName;
+            if (typeName is "PCL.PluginTabHost" or "PCL.PagePluginsInstalled") return true;
+        }
+
+        return false;
+    }
+
+    private static FrameworkElement CreatePreviewPanel(string message)
+    {
+        var panel = new StackPanel();
+        panel.Children.Add(new TextBlock
+        {
+            Text = message,
+            FontSize = 13,
+            TextWrapping = TextWrapping.Wrap
+        });
+        return panel;
     }
 
     private static void SetText(FrameworkElement page, string name, string text)

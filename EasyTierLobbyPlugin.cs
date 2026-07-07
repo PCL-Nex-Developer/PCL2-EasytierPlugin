@@ -48,7 +48,7 @@ public sealed class EasyTierLobbyPlugin : PclPluginBase
             Group = context.Host.Core.Localize("Tools.Left.Multiplayer", "联机"),
             Icon = "lucide/link-2",
             Order = 0,
-            Factory = () => _pageHooks?.HookToolsPage(pages.CreateLobbyToolsPage()) ?? pages.CreateLobbyToolsPage()
+            Factory = () => _pageHooks?.CreateToolsPage(pages.CreateLobbyToolsPage) ?? pages.CreateLobbyToolsPage()
         });
         _settingsRegistration = ui.ContributeSettingsPanel(new SettingsPanelDescriptor
         {
@@ -57,7 +57,7 @@ public sealed class EasyTierLobbyPlugin : PclPluginBase
             Group = context.Host.Core.Localize("Setup.Left.Category.Tools", "工具"),
             Icon = "lucide/bubbles",
             Order = 0,
-            Factory = () => _pageHooks?.HookSettingsPage(pages.CreateLobbySettingsPage()) ?? pages.CreateLobbySettingsPage()
+            Factory = () => _pageHooks?.CreateSettingsPage(pages.CreateLobbySettingsPage) ?? pages.CreateLobbySettingsPage()
         });
 
         Log?.Info("EasyTier lobby plugin registered.");
