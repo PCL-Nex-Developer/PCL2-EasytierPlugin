@@ -6,7 +6,7 @@
   "description": "实现 EasyTier 联机大厅功能。",
   "runtime": "dotnet",
   "entryAssembly": "PCL.EasyTierPlugin.dll",
-  "minApiVersion": "1.2.0",
+  "minApiVersion": "1.1.0",
   "capabilities": [
     "RegisterExtension",
     "ContributeTools",

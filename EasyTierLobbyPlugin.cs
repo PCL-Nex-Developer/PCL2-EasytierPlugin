@@ -12,17 +12,17 @@ namespace PCL.EasyTierPlugin;
     ThisAssembly.PluginVersion,
     Author = "Nex(XueLing)",
     Description = "实现 EasyTier 联机大厅功能。",
-    MinApiVersion = "1.2.0.0",
+    MinApiVersion = "1.1.0.0",
     Capabilities = PluginCapabilities.RegisterExtension | PluginCapabilities.ContributeTools | PluginCapabilities.ContributeSettings,
     LoadTiming = PluginLoadTiming.WindowCreated)]
 public sealed class EasyTierLobbyPlugin : PclPluginBase
 {
     private IDisposable? _providerRegistration;
     private IDisposable? _serviceRegistration;
-    private IDisposable? _networkTestRegistration;
     private IDisposable? _toolsRegistration;
     private IDisposable? _settingsRegistration;
     private EasyTierLobbyTunnelProvider? _provider;
+    private EasyTierLobbyPageHooks? _pageHooks;
 
     public override Task LoadAsync(IPluginContext context, CancellationToken cancellationToken = default)
     {
@@ -35,7 +35,7 @@ public sealed class EasyTierLobbyPlugin : PclPluginBase
         ScaffoldingFactory.SetProvider(_provider);
         _providerRegistration = extensions.RegisterLobbyTunnelProvider(_provider);
         _serviceRegistration = extensions.RegisterLobbyService(new EasyTierLobbyServiceAdapter(), displayName: "EasyTier Lobby Service");
-        _networkTestRegistration = extensions.RegisterLobbyNetworkTestService(new EasyTierNetworkTestService(), displayName: "EasyTier Network Test");
+        _pageHooks = new EasyTierLobbyPageHooks(context, Log ?? context.Host.Core.GetLogger("EasyTier"));
 
         var ui = context.Host.Ui ?? throw new InvalidOperationException("UI API is unavailable.");
         var pages = context.Host.GetOptionalService("pcl:host:tools-pages") as IPluginPageHostService
@@ -48,7 +48,7 @@ public sealed class EasyTierLobbyPlugin : PclPluginBase
             Group = context.Host.Core.Localize("Tools.Left.Multiplayer", "联机"),
             Icon = "lucide/link-2",
             Order = 0,
-            Factory = pages.CreateLobbyToolsPage
+            Factory = () => _pageHooks?.HookToolsPage(pages.CreateLobbyToolsPage()) ?? pages.CreateLobbyToolsPage()
         });
         _settingsRegistration = ui.ContributeSettingsPanel(new SettingsPanelDescriptor
         {
@@ -57,7 +57,7 @@ public sealed class EasyTierLobbyPlugin : PclPluginBase
             Group = context.Host.Core.Localize("Setup.Left.Category.Tools", "工具"),
             Icon = "lucide/bubbles",
             Order = 0,
-            Factory = pages.CreateLobbySettingsPage
+            Factory = () => _pageHooks?.HookSettingsPage(pages.CreateLobbySettingsPage()) ?? pages.CreateLobbySettingsPage()
         });
 
         Log?.Info("EasyTier lobby plugin registered.");
@@ -70,10 +70,9 @@ public sealed class EasyTierLobbyPlugin : PclPluginBase
         _settingsRegistration = null;
         _toolsRegistration?.Dispose();
         _toolsRegistration = null;
-        _networkTestRegistration?.Dispose();
-        _networkTestRegistration = null;
         _serviceRegistration?.Dispose();
         _serviceRegistration = null;
+        _pageHooks = null;
         if (_provider is not null)
         {
             ScaffoldingFactory.ClearProvider(_provider);

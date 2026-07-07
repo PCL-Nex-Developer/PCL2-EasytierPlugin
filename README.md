@@ -12,7 +12,7 @@
 | 作者 | `Nex(XueLing)` |
 | 运行时 | `.NET` DLL 插件 |
 | 入口程序集 | `PCL.EasyTierPlugin.dll` |
-| 最低 SDK API | `1.2.0` |
+| 最低 SDK API | `1.1.0` |
 
 插件声明的能力：
 
@@ -126,7 +126,7 @@ plugin.json
 	"author": "Nex(XueLing)",
 	"runtime": "dotnet",
 	"entryAssembly": "PCL.EasyTierPlugin.dll",
-	"minApiVersion": "1.2.0"
+	"minApiVersion": "1.1.0"
 }
 ```
 
