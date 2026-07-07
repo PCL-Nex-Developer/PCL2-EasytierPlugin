@@ -15,7 +15,7 @@ jobs:
     env:
       PLUGIN_ID: pclnex.easytier
       PACKAGE_NAME: pclnex.easytier-${{ github.ref_name }}.pclx
-      MIN_API_VERSION: "1.1.0"
+      MIN_API_VERSION: "1.2.0"
       MIN_HOST_VERSION: "3.0.0"
       HOST_REPOSITORY: PCL-Nex-Developer/PCL2-Nex
 

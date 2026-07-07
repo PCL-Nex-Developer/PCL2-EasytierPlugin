@@ -12,13 +12,14 @@ namespace PCL.EasyTierPlugin;
     ThisAssembly.PluginVersion,
     Author = "Nex(XueLing)",
     Description = "实现 EasyTier 联机大厅功能。",
-    MinApiVersion = "1.1.0.0",
+    MinApiVersion = "1.2.0.0",
     Capabilities = PluginCapabilities.RegisterExtension | PluginCapabilities.ContributeTools | PluginCapabilities.ContributeSettings,
     LoadTiming = PluginLoadTiming.WindowCreated)]
 public sealed class EasyTierLobbyPlugin : PclPluginBase
 {
     private IDisposable? _providerRegistration;
     private IDisposable? _serviceRegistration;
+    private IDisposable? _networkTestRegistration;
     private IDisposable? _toolsRegistration;
     private IDisposable? _settingsRegistration;
     private EasyTierLobbyTunnelProvider? _provider;
@@ -34,6 +35,7 @@ public sealed class EasyTierLobbyPlugin : PclPluginBase
         ScaffoldingFactory.SetProvider(_provider);
         _providerRegistration = extensions.RegisterLobbyTunnelProvider(_provider);
         _serviceRegistration = extensions.RegisterLobbyService(new EasyTierLobbyServiceAdapter(), displayName: "EasyTier Lobby Service");
+        _networkTestRegistration = extensions.RegisterLobbyNetworkTestService(new EasyTierNetworkTestService(), displayName: "EasyTier Network Test");
 
         var ui = context.Host.Ui ?? throw new InvalidOperationException("UI API is unavailable.");
         var pages = context.Host.GetOptionalService("pcl:host:tools-pages") as IPluginPageHostService
@@ -68,6 +70,8 @@ public sealed class EasyTierLobbyPlugin : PclPluginBase
         _settingsRegistration = null;
         _toolsRegistration?.Dispose();
         _toolsRegistration = null;
+        _networkTestRegistration?.Dispose();
+        _networkTestRegistration = null;
         _serviceRegistration?.Dispose();
         _serviceRegistration = null;
         if (_provider is not null)
