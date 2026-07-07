@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    env:
+      PLUGIN_ID: pclnex.easytier
+      PACKAGE_NAME: pclnex.easytier-${{ github.ref_name }}.pclx
+      MIN_API_VERSION: "1.1.0"
+      MIN_HOST_VERSION: "3.0.0"
+      HOST_REPOSITORY: PCL-Nex-Developer/PCL2-Nex
+
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@v6
+        with:
+          path: PCLNexOther/PCL.EasyTierPlugin
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout PCL host
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.HOST_REPOSITORY }}
+          path: PCL-CE
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build plugin package
+        shell: pwsh
+        working-directory: PCLNexOther/PCL.EasyTierPlugin
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $attributeVersion = if ($version -match '^\d+\.\d+\.\d+$') { "$version.0" } else { $version }
+          $pluginJson = Get-Content -LiteralPath plugin.json -Raw | ConvertFrom-Json
+          $pluginJson.version = $version
+          $pluginJsonContent = ($pluginJson | ConvertTo-Json -Depth 20) + [Environment]::NewLine
+          [System.IO.File]::WriteAllText((Resolve-Path plugin.json), $pluginJsonContent, [System.Text.UTF8Encoding]::new($false))
+          dotnet build .\PCL.EasyTierPlugin.csproj -t:PublishPlugin --configuration Release --property:Platform=AnyCPU --property:PluginVersion=$attributeVersion
+
+      - name: Create .pclx package
+        shell: pwsh
+        working-directory: PCLNexOther/PCL.EasyTierPlugin
+        run: |
+          $packagePath = Join-Path (Resolve-Path .\artifacts) "${{ env.PACKAGE_NAME }}"
+          if (Test-Path -LiteralPath $packagePath) { Remove-Item -LiteralPath $packagePath -Force }
+          [System.IO.Compression.ZipFile]::CreateFromDirectory((Resolve-Path .\artifacts\${{ env.PLUGIN_ID }}), $packagePath)
+          $sha256 = (Get-FileHash -LiteralPath .\artifacts\${{ env.PACKAGE_NAME }} -Algorithm SHA256).Hash.ToLowerInvariant()
+          "PACKAGE_SHA256=$sha256" >> $env:GITHUB_ENV
+          "PACKAGE_URL=https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}" >> $env:GITHUB_ENV
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          files: PCLNexOther/PCL.EasyTierPlugin/artifacts/${{ env.PACKAGE_NAME }}
+          generate_release_notes: true
+
+      - name: Update manifest
+        shell: pwsh
+        working-directory: PCLNexOther/PCL.EasyTierPlugin
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $manifest = Get-Content -LiteralPath manifest.json -Raw | ConvertFrom-Json
+          if ($null -eq $manifest.versions) {
+            $manifest | Add-Member -MemberType NoteProperty -Name versions -Value @()
+          }
+          $entry = [ordered]@{
+            version = $version
+            packageUrl = $env:PACKAGE_URL
+            sha256 = $env:PACKAGE_SHA256
+            minApiVersion = $env:MIN_API_VERSION
+            minHostVersion = $env:MIN_HOST_VERSION
+            releaseNotes = "https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          }
+          $existing = @($manifest.versions | Where-Object { $_.version -ne $version })
+          $manifest.versions = @($entry) + $existing
+            $manifestContent = ($manifest | ConvertTo-Json -Depth 20) + [Environment]::NewLine
+            [System.IO.File]::WriteAllText((Resolve-Path manifest.json), $manifestContent, [System.Text.UTF8Encoding]::new($false))
+
+      - name: Commit manifest
+        shell: pwsh
+        working-directory: PCLNexOther/PCL.EasyTierPlugin
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json plugin.json
+          if (git diff --cached --quiet) {
+            Write-Host "manifest.json is already up to date."
+            exit 0
+          }
+          git commit -m "chore: update manifest for ${{ github.ref_name }}"
+          git push origin HEAD:main

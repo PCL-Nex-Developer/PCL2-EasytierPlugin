@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <Platform Name="AnyCPU" />
+    <Platform Name="x64" />
+    <Platform Name="ARM64" />
+  </Configurations>
+  <Project Path="PCL.EasyTierPlugin.csproj" Type="C#" />
+  <Project Path="PCL.EasyTierPlugin.Test\PCL.EasyTierPlugin.Test.csproj" Type="C#" />
+</Solution>
