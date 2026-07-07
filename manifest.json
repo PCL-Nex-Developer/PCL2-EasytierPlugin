@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "1.0.4",
+      "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v1.0.4/pclnex.easytier-v1.0.4.pclx",
+      "sha256": "3e2002bc407f56861635260ef5365d77c92bfa7a98612a106dc8d70bda231b35",
+      "minApiVersion": "1.1.0",
+      "minHostVersion": "3.0.0",
+      "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v1.0.4"
+    },
+    {
       "version": "1.0.3",
       "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v1.0.3/pclnex.easytier-v1.0.3.pclx",
       "sha256": "469a38c25f33b694988fa69fdb8f44bd5d0af638b853c3c4e4cd13ab5dd4170d",
