@@ -233,7 +233,11 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
         foreach (var frame in new StackTrace().GetFrames() ?? [])
         {
             var typeName = frame.GetMethod()?.DeclaringType?.FullName;
-            if (typeName is "PCL.PluginTabHost" or "PCL.PagePluginsInstalled") return true;
+            if (string.IsNullOrEmpty(typeName)) continue;
+            if (typeName == "PCL.PluginTabHost" ||
+                typeName.StartsWith("PCL.PagePlugins", StringComparison.Ordinal) ||
+                typeName.Contains("PluginManagement", StringComparison.Ordinal))
+                return true;
         }
 
         return false;

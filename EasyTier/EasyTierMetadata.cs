@@ -6,7 +6,7 @@ namespace PCL.EasyTierPlugin.EasyTier;
 
 public static class EasyTierMetadata
 {
-    public const string CurrentEasyTierVer = "2.5.0";
+    public const string CurrentEasyTierVer = "2.6.4";
 
     public static string ArchitectureName => RuntimeInformation.OSArchitecture == Architecture.Arm64 ? "arm64" : "x86_64";
 

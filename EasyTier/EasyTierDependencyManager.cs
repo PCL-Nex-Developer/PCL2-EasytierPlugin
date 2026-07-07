@@ -66,9 +66,9 @@ internal static class EasyTierDependencyManager
     {
         var urls = new[]
         {
-            $"https://github.com/EasyTier/EasyTier/releases/download/v{EasyTierMetadata.CurrentEasyTierVer}/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip",
-            $"https://staticassets.naids.com/resources/PCLNex/static/easytier/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip",
-            $"https://s3.pysio.online/PCL2-Nex/static/easytier/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip"
+            $"https://staticassets.naids.com/resources/pclce/static/easytier/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip",
+            $"https://s3.pysio.online/pcl2-ce/static/easytier/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip",
+            $"https://github.com/EasyTier/EasyTier/releases/download/v{EasyTierMetadata.CurrentEasyTierVer}/easytier-windows-{EasyTierMetadata.ArchitectureName}-v{EasyTierMetadata.CurrentEasyTierVer}.zip"
         };
 
         Exception? lastError = null;
