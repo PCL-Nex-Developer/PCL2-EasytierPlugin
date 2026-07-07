@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using PCL.Core.App.Localization;
 using PCL.Core.IO.Net.Http;
@@ -42,14 +42,17 @@ public static class NatayarkProfileManager
         {
             try
             {
-                var requestData =
-                    $"grant_type={(isRefresh ? "refresh_token" : "authorization_code")}" +
-                    $"&client_id={EasyTierPluginSecrets.Get("NAID_CLIENT_ID")}" +
-                    $"&client_secret={EasyTierPluginSecrets.Get("NAID_CLIENT_SECRET")}" +
-                    $"&{(isRefresh ? "refresh_token" : "code")}={token}" +
-                    (isRefresh ? string.Empty : $"&redirect_uri=http://localhost:{port}/callback");
+                var requestData = new List<KeyValuePair<string, string>>
+                {
+                    new("grant_type", isRefresh ? "refresh_token" : "authorization_code"),
+                    new("client_id", EasyTierPluginSecrets.Get("NAID_CLIENT_ID") ?? string.Empty),
+                    new("client_secret", EasyTierPluginSecrets.Get("NAID_CLIENT_SECRET") ?? string.Empty),
+                    new(isRefresh ? "refresh_token" : "code", token)
+                };
+                if (!isRefresh)
+                    requestData.Add(new KeyValuePair<string, string>("redirect_uri", $"http://localhost:{port}/callback"));
 
-                var httpContent = new StringContent(requestData, Encoding.UTF8, "application/x-www-form-urlencoded");
+                using var httpContent = new FormUrlEncodedContent(requestData);
 
                 using var oauthResponse = await HttpRequest
                     .CreatePost("https://account.naids.com/api/oauth2/token")

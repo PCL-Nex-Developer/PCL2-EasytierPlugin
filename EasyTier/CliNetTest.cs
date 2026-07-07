@@ -1,8 +1,8 @@
 using System;
 using System.Diagnostics;
-using System.IO.Pipelines;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using PCL.Core.App.Localization;
 using PCL.Core.Logging;
@@ -32,7 +32,7 @@ public class CliNetTest
         public required bool SupportIPv6;
     }
 
-    public async static Task<NetStatus?> GetNetStatusAsync()
+    public async static Task<NetStatus?> GetNetStatusAsync(CancellationToken cancellationToken = default)
     {
         using var cliProcess = new Process();
         cliProcess.StartInfo = new ProcessStartInfo
@@ -52,13 +52,53 @@ public class CliNetTest
             StandardInputEncoding = Encoding.UTF8
         };
         cliProcess.EnableRaisingEvents = true;
-        cliProcess.Start();
-        var reader = PipeReader.Create(cliProcess.StandardOutput.BaseStream);
+
+        try
+        {
+            cliProcess.Start();
+        }
+        catch (Exception ex)
+        {
+            LogWrapper.Warn(ex, "Link", "Failed to start EasyTier net test CLI");
+            return null;
+        }
+
+        var stdoutTask = cliProcess.StandardOutput.ReadToEndAsync(cancellationToken);
+        var stderrTask = cliProcess.StandardError.ReadToEndAsync(cancellationToken);
 
         StunInfo? stunInfo = null;
         try
         {
-            stunInfo = await JsonSerializer.DeserializeAsync<StunInfo>(reader, JsonCompat.SerializerOptions);
+            await cliProcess.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            var stdout = await stdoutTask.ConfigureAwait(false);
+            var stderr = await stderrTask.ConfigureAwait(false);
+
+            if (cliProcess.ExitCode != 0)
+            {
+                LogWrapper.Warn("Link", $"EasyTier net test CLI exited with code {cliProcess.ExitCode}: {TrimForLog(stderr)}");
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(stdout))
+            {
+                LogWrapper.Warn("Link", $"EasyTier net test CLI returned empty output: {TrimForLog(stderr)}");
+                return null;
+            }
+
+            stunInfo = JsonSerializer.Deserialize<StunInfo>(stdout, JsonCompat.SerializerOptions);
+        }
+        catch (OperationCanceledException)
+        {
+            try
+            {
+                if (!cliProcess.HasExited) cliProcess.Kill(true);
+            }
+            catch
+            {
+                // Ignore process cleanup failures.
+            }
+            LogWrapper.Warn("Link", "EasyTier net test timed out");
+            return null;
         }
         catch (Exception ex)
         {
@@ -77,6 +117,13 @@ public class CliNetTest
         }
 
         return new NetStatus { UdpNatType = GetNatTypeViaCode(stunInfo.UdpNatType), TcpNatType = GetNatTypeViaCode(stunInfo.TcpNatType), SupportIPv6 = supportIPv6 };
+    }
+
+    private static string TrimForLog(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "no stderr";
+        text = text.Replace("\r", " ").Replace("\n", " ").Trim();
+        return text.Length <= 500 ? text : text[..500] + "...";
     }
 
     public static NatType GetNatTypeViaCode(int type) => type switch

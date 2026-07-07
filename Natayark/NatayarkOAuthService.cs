@@ -32,7 +32,11 @@ internal static class NatayarkOAuthService
                     return null;
                 }
 
-                var code = parameters["code"];
+                if (!parameters.TryGetValue("code", out var code) || string.IsNullOrWhiteSpace(code))
+                {
+                    completeCallback?.Invoke();
+                    return OAuthCompleteStatus.Failed("登录回调缺少授权码", new InvalidOperationException("Missing OAuth code."));
+                }
 
                 try
                 {
@@ -54,7 +58,9 @@ internal static class NatayarkOAuthService
 
     private static bool StartOAuthWaitingCallback(string serviceName, string url, OAuthComplete completeCallback)
     {
-        if (IsWebServerRunning(serviceName)) return false;
+        // 字典 key 统一使用 "oauth/{serviceName}"，与 StartWebServer/DisposeWebServer 保持一致，
+        // 否则 IsWebServerRunning 永远返回 false，重复点击登录时无法正确阻止旧实例。
+        if (IsWebServerRunning($"oauth/{serviceName}")) return false;
         Task.Run(() =>
         {
             var serverPort = 0;
@@ -194,7 +200,8 @@ internal static class NatayarkOAuthService
                     foreach (var iq in sq)
                     {
                         var q = iq.Split(splitChar, 2);
-                        if (q.Length == 2) parameterMap[q[0]] = q[1];
+                        if (q.Length == 2)
+                            parameterMap[UrlDecode(q[0])] = UrlDecode(q[1]);
                     }
                 }
                 catch (Exception ex)
@@ -251,7 +258,33 @@ internal static class NatayarkOAuthService
 
         private static Task<HttpRouteResponse> HandleComplete(HttpListenerRequest request)
         {
-            return HttpRouteResponse.Text("<html><body>Natayark ID 登录完成，可以关闭此页面。</body></html>", "text/html").AsTask();
+            // /complete 页面由浏览器在 /callback 重定向后加载。
+            // 必须在这里轮询 /status，服务端才会在 HandleStatus 中真正执行“用 code 换 token + 拉取用户信息”，
+            // 否则 completeCallback 永远不会被调用，登录永远无法完成。
+            const string html = """
+                <!DOCTYPE html>
+                <html><head><meta charset="utf-8"><title>Natayark ID</title></head>
+                <body style="font-family:'Microsoft YaHei',sans-serif;text-align:center;padding:48px">
+                <p id="msg">正在完成 Natayark ID 登录…</p>
+                <script>
+                (async function () {
+                    var msg = document.getElementById('msg');
+                    for (var i = 0; i < 60; i++) {
+                        try {
+                            var r = await fetch('status', { cache: 'no-store' });
+                            if (r.status === 404) { await new Promise(function (x) { setTimeout(x, 500); }); continue; }
+                            var d = await r.json();
+                            if (d && d.success) { msg.innerText = '登录成功：' + (d.username || '') + '，可以关闭此页面。'; return; }
+                            if (d && d.message) { msg.innerText = '登录失败：' + d.message; return; }
+                        } catch (e) { /* 重试 */ }
+                        await new Promise(function (x) { setTimeout(x, 500); });
+                    }
+                    msg.innerText = '登录超时，请重试。';
+                })();
+                </script>
+                </body></html>
+                """;
+            return HttpRouteResponse.Text(html, "text/html").AsTask();
         }
     }
 
@@ -265,6 +298,8 @@ internal static class NatayarkOAuthService
         public static OAuthCompleteStatus Complete(string username) => new() { success = true, username = username };
         public static OAuthCompleteStatus Failed(string message, Exception ex) => new() { success = false, message = message, stacktrace = ex.ToString() };
     }
+
+    private static string UrlDecode(string value) => Uri.UnescapeDataString(value.Replace("+", " "));
 
     private delegate OAuthCompleteStatus? OAuthComplete(bool success, IDictionary<string, string> parameters, string content);
 }

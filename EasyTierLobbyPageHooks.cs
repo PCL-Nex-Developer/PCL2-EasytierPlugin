@@ -177,7 +177,7 @@ internal sealed class EasyTierLobbyPageHooks(IPluginContext context, IPluginLogg
     {
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
         await EasyTierDependencyManager.EnsureReadyAsync(context, log, cts.Token).ConfigureAwait(false);
-        return await CliNetTest.GetNetStatusAsync().ConfigureAwait(false);
+        return await CliNetTest.GetNetStatusAsync(cts.Token).ConfigureAwait(false);
     }
 
     private Task InvokeOnUiAsync(Action action)

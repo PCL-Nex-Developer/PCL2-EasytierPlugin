@@ -190,7 +190,8 @@ public static class LobbyService
 
                     if (pingRes is null)
                     {
-                        throw new ArgumentNullException(nameof(pingRes), "Failed to ping minecraft entity.");
+                        LogWrapper.Debug("LobbyService", $"Ignore port {info.Address.Port}: no Minecraft status response.");
+                        return;
                     }
 
                     var worldName = Lang.Text("Link.Lobby.WorldNameFormat",
@@ -202,7 +203,7 @@ public static class LobbyService
                 }
                 catch (Exception ex)
                 {
-                    LogWrapper.Error(ex, "LobbyService", $"Pinging port {info.Address.Port} failed.");
+                    LogWrapper.Debug("LobbyService", $"Pinging port {info.Address.Port} failed: {ex.Message}");
                 }
             }));
 
