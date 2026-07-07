@@ -1,7 +1,7 @@
 {
   "id": "pclnex.easytier",
   "name": "EasyTier 联机大厅",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "author": "Nex(XueLing)",
   "description": "实现 EasyTier 联机大厅功能。",
   "runtime": "dotnet",
