@@ -1,0 +1,80 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AssemblyName>PCL.EasyTierPlugin</AssemblyName>
+    <RootNamespace>PclNex.EasyTierLobby</RootNamespace>
+    <LangVersion>preview</LangVersion>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+    <PluginVersion Condition="'$(PluginVersion)' == ''">1.0.7.0</PluginVersion>
+    <PclHostRoot Condition="'$(PclHostRoot)' == ''">$(MSBuildThisFileDirectory)..\..\..\..\PCL-CE</PclHostRoot>
+  </PropertyGroup>
+
+  <Target Name="GeneratePluginBuildVersion" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <PluginBuildVersionSource>$(IntermediateOutputPath)PluginBuildVersion.g.cs</PluginBuildVersionSource>
+    </PropertyGroup>
+    <ItemGroup>
+      <PluginBuildVersionLine Include="namespace PclNex.EasyTierLobby%3B" />
+      <PluginBuildVersionLine Include="internal static class ThisAssembly" />
+      <PluginBuildVersionLine Include="{" />
+      <PluginBuildVersionLine Include="    public const string PluginVersion = &quot;$(PluginVersion)&quot;%3B" />
+      <PluginBuildVersionLine Include="}" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(PluginBuildVersionSource)" Lines="@(PluginBuildVersionLine)" Overwrite="true" Encoding="UTF-8" />
+    <ItemGroup>
+      <Compile Include="$(PluginBuildVersionSource)" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(PclHostRoot)\PCL.Core\PCL.Core.csproj" Private="false" />
+    <ProjectReference Include="$(PclHostRoot)\PCL.Plugin.Abstractions\PCL.Plugin.Abstractions.csproj" Private="false" />
+    <ProjectReference Include="$(PclHostRoot)\Plain Craft Launcher 2\Plain Craft Launcher 2.csproj" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.Text.Json.Nodes" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="CeOriginal\**\*.cs" />
+    <Page Remove="CeOriginal\**\*.xaml" />
+    <Compile Remove="CeUi\Controls\**\*.cs" />
+    <Page Remove="CeUi\Controls\**\*.xaml" />
+    <Compile Include="CeOriginal\Modules\ModLink.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\plugin.json" Link="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\oauth-complete.html" />
+    <EmbeddedResource Include="$(PclHostRoot)\PCL.Core\App\Localization\Languages\zh-CN.xaml" Link="Resources\ce-zh-CN.xaml" LogicalName="PclNex.EasyTierLobby.Resources.ce-zh-CN.xaml" />
+  </ItemGroup>
+
+  <Target Name="PublishPlugin" DependsOnTargets="Build">
+    <PropertyGroup>
+      <PluginPackageDir>$(MSBuildProjectDirectory)\..\..\artifacts\pclnex.easytier\</PluginPackageDir>
+    </PropertyGroup>
+    <RemoveDir Directories="$(PluginPackageDir)" />
+    <MakeDir Directories="$(PluginPackageDir)" />
+    <ItemGroup>
+      <PluginPackageFiles Include="$(TargetDir)$(TargetFileName)" />
+      <PluginPackageFiles Include="$(TargetDir)$(TargetName).deps.json" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
+      <PluginPackageFiles Include="$(TargetDir)System.Management.dll" Condition="Exists('$(TargetDir)System.Management.dll')" />
+      <PluginPackageFiles Include="$(MSBuildProjectDirectory)\..\..\plugin.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PluginPackageFiles)" DestinationFolder="$(PluginPackageDir)" />
+  </Target>
+</Project>

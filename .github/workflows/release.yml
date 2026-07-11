@@ -15,7 +15,7 @@ jobs:
     env:
       PLUGIN_ID: pclnex.easytier
       PACKAGE_NAME: pclnex.easytier-${{ github.ref_name }}.pclx
-      MIN_API_VERSION: "1.1.0"
+      MIN_API_VERSION: "1.2.1.0"
       MIN_HOST_VERSION: "3.0.0"
       HOST_REPOSITORY: PCL-Nex-Developer/PCL2-Nex
 
@@ -23,7 +23,7 @@ jobs:
       - name: Checkout plugin
         uses: actions/checkout@v6
         with:
-          path: PCLNexOther/PCL.EasyTierPlugin
+          path: PCLNexOther/PCL2-EasytierPlugin
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -38,9 +38,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Build plugin package
+      - name: Build and test plugin
         shell: pwsh
-        working-directory: PCLNexOther/PCL.EasyTierPlugin
+        working-directory: PCLNexOther/PCL2-EasytierPlugin
         run: |
           $version = "${{ github.ref_name }}" -replace '^v', ''
           $attributeVersion = if ($version -match '^\d+\.\d+\.\d+$') { "$version.0" } else { $version }
@@ -48,28 +48,29 @@ jobs:
           $pluginJson.version = $version
           $pluginJsonContent = ($pluginJson | ConvertTo-Json -Depth 20) + [Environment]::NewLine
           [System.IO.File]::WriteAllText((Resolve-Path plugin.json), $pluginJsonContent, [System.Text.UTF8Encoding]::new($false))
-          dotnet build .\PCL.EasyTierPlugin.csproj -t:PublishPlugin --configuration Release --property:Platform=AnyCPU --property:PluginVersion=$attributeVersion
+          dotnet build .\src\PclNex.EasyTierLobby\PclNex.EasyTierLobby.csproj -t:PublishPlugin --configuration Release --property:Platform=AnyCPU --property:PluginVersion=$attributeVersion
+          dotnet run --project .\tests\PclNex.EasyTierLobby.UiSmoke\PclNex.EasyTierLobby.UiSmoke.csproj --configuration Release --property:Platform=AnyCPU --property:PluginVersion=$attributeVersion
 
       - name: Create .pclx package
         shell: pwsh
-        working-directory: PCLNexOther/PCL.EasyTierPlugin
+        working-directory: PCLNexOther/PCL2-EasytierPlugin
         run: |
           $packagePath = Join-Path (Resolve-Path .\artifacts) "${{ env.PACKAGE_NAME }}"
           if (Test-Path -LiteralPath $packagePath) { Remove-Item -LiteralPath $packagePath -Force }
           [System.IO.Compression.ZipFile]::CreateFromDirectory((Resolve-Path .\artifacts\${{ env.PLUGIN_ID }}), $packagePath)
-          $sha256 = (Get-FileHash -LiteralPath .\artifacts\${{ env.PACKAGE_NAME }} -Algorithm SHA256).Hash.ToLowerInvariant()
+          $sha256 = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant()
           "PACKAGE_SHA256=$sha256" >> $env:GITHUB_ENV
           "PACKAGE_URL=https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ env.PACKAGE_NAME }}" >> $env:GITHUB_ENV
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2.5.0
         with:
-          files: PCLNexOther/PCL.EasyTierPlugin/artifacts/${{ env.PACKAGE_NAME }}
+          files: PCLNexOther/PCL2-EasytierPlugin/artifacts/${{ env.PACKAGE_NAME }}
           generate_release_notes: true
 
       - name: Update manifest
         shell: pwsh
-        working-directory: PCLNexOther/PCL.EasyTierPlugin
+        working-directory: PCLNexOther/PCL2-EasytierPlugin
         run: |
           $version = "${{ github.ref_name }}" -replace '^v', ''
           $manifest = Get-Content -LiteralPath manifest.json -Raw | ConvertFrom-Json
@@ -86,12 +87,12 @@ jobs:
           }
           $existing = @($manifest.versions | Where-Object { $_.version -ne $version })
           $manifest.versions = @($entry) + $existing
-            $manifestContent = ($manifest | ConvertTo-Json -Depth 20) + [Environment]::NewLine
-            [System.IO.File]::WriteAllText((Resolve-Path manifest.json), $manifestContent, [System.Text.UTF8Encoding]::new($false))
+          $manifestContent = ($manifest | ConvertTo-Json -Depth 20) + [Environment]::NewLine
+          [System.IO.File]::WriteAllText((Resolve-Path manifest.json), $manifestContent, [System.Text.UTF8Encoding]::new($false))
 
       - name: Commit manifest
         shell: pwsh
-        working-directory: PCLNexOther/PCL.EasyTierPlugin
+        working-directory: PCLNexOther/PCL2-EasytierPlugin
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

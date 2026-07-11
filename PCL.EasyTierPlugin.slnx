@@ -6,6 +6,7 @@
     <Platform Name="x64" />
     <Platform Name="ARM64" />
   </Configurations>
-  <Project Path="PCL.EasyTierPlugin.csproj" Type="C#" />
-  <Project Path="PCL.EasyTierPlugin.Test\PCL.EasyTierPlugin.Test.csproj" Type="C#" />
+  <Project Path="src/PclNex.EasyTierLobby/PclNex.EasyTierLobby.csproj" Type="C#" />
+  <Project Path="tests/PclNex.EasyTierLobby.Smoke/PclNex.EasyTierLobby.Smoke.csproj" Type="C#" />
+  <Project Path="tests/PclNex.EasyTierLobby.UiSmoke/PclNex.EasyTierLobby.UiSmoke.csproj" Type="C#" />
 </Solution>

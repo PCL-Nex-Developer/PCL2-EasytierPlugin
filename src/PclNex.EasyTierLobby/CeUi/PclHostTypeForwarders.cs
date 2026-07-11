@@ -1,0 +1,17 @@
+using System.Runtime.CompilerServices;
+
+[assembly: TypeForwardedTo(typeof(PCL.MyButton))]
+[assembly: TypeForwardedTo(typeof(PCL.MyCard))]
+[assembly: TypeForwardedTo(typeof(PCL.MyCheckBox))]
+[assembly: TypeForwardedTo(typeof(PCL.MyComboBox))]
+[assembly: TypeForwardedTo(typeof(PCL.MyComboBoxItem))]
+[assembly: TypeForwardedTo(typeof(PCL.MyHint))]
+[assembly: TypeForwardedTo(typeof(PCL.MyIconButton))]
+[assembly: TypeForwardedTo(typeof(PCL.MyIconTextButton))]
+[assembly: TypeForwardedTo(typeof(PCL.MyListItem))]
+[assembly: TypeForwardedTo(typeof(PCL.MyLoading))]
+[assembly: TypeForwardedTo(typeof(PCL.MyPageRight))]
+[assembly: TypeForwardedTo(typeof(PCL.MyScrollViewer))]
+[assembly: TypeForwardedTo(typeof(PCL.MyTextBox))]
+[assembly: TypeForwardedTo(typeof(PCL.MyTextButton))]
+[assembly: TypeForwardedTo(typeof(PCL.CustomEventService))]

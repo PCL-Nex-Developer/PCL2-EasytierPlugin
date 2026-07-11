@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PclHostRoot Condition="'$(PclHostRoot)' == ''">$(MSBuildThisFileDirectory)..\..\..\..\PCL-CE</PclHostRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PclNex.EasyTierLobby\PclNex.EasyTierLobby.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(PclHostRoot)\Plain Craft Launcher 2\metadata.json"
+                      LogicalName="PCL.metadata.json" />
+  </ItemGroup>
+</Project>

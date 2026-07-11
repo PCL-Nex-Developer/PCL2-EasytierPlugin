@@ -1,6 +1,6 @@
 # EasyTier 联机大厅插件
 
-这是面向 PCL Nex 的 EasyTier 联机大厅插件。插件通过 PCL 的通用扩展点接入启动器，为联机大厅提供基于 EasyTier 的网络隧道能力。
+这是面向 PCL Nex 的 EasyTier 联机大厅插件。插件通过 PCL 的工具页和设置页扩展点接入启动器，提供兼容 PCL-CE Scaffolding 协议的 EasyTier 联机大厅。
 
 ## 插件信息
 
@@ -8,183 +8,112 @@
 | --- | --- |
 | 插件 ID | `pclnex.easytier` |
 | 插件名称 | `EasyTier 联机大厅` |
-| 当前版本 | `1.0.0` |
+| 当前开发版本 | `1.0.7` |
 | 作者 | `Nex(XueLing)` |
-| 运行时 | `.NET` DLL 插件 |
 | 入口程序集 | `PCL.EasyTierPlugin.dll` |
-| 最低 SDK API | `1.1.0` |
+| 最低 SDK API | `1.2.1.0` |
+| 最低宿主版本 | `3.0.0` |
 
 插件声明的能力：
 
 ```json
 [
-	"RegisterExtension",
-	"ContributeTools",
-	"ContributeSettings"
+  "ContributeTools",
+  "ContributeSettings"
 ]
 ```
 
-其中 `RegisterExtension` 用于注册联机大厅相关扩展点，`ContributeTools` 和 `ContributeSettings` 用于向启动器工具页、设置页贡献界面入口。
+PCL2-Nex 插件市场通过主仓库 `dev` 分支的 `plugins.json` 注册本插件：
+
+- 插件清单：`https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/raw/refs/heads/main/manifest.json`
+- 插件仓库：`https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin`
 
 ## 功能范围
 
-当前插件主要负责：
-
-- 注册 EasyTier 联机隧道提供器。
-- 注册联机大厅服务适配器。
-- 向 PCL 工具页添加联机大厅入口。
-- 向 PCL 设置页添加联机相关设置入口。
-- 管理 EasyTier 联机所需的本地状态、账号缓存和公告缓存。
-
-插件本身不替代 PCL 主程序。它需要由支持插件系统的 PCL Nex 版本加载。
+- 创建和加入 PCL-CE `U/XXXX-XXXX-XXXX-XXXX` 大厅。
+- 使用 EasyTier 2.6.4 建立 P2P 或中继连接。
+- 支持 Scaffolding 心跳、成员列表、Minecraft 端口查询和协议探测。
+- 自动转发 Minecraft 局域网端口并向加入端广播世界。
+- 支持 Natayark OAuth、refresh token 持久化和大厅登录前置检查。
+- 支持本地联机用户名实时保存，并在创建或加入大厅时立即生效。
+- 支持公告、NAT 测试、连接类型、延迟和成员列表展示。
+- 对世界刷新执行取消、单飞和按端口去重。
 
 ## 目录结构
 
 ```text
-PCL.EasyTierPlugin/
-	EasyTier/                 EasyTier 进程、节点、转发和模型相关代码
-	Lobby/                    联机大厅流程、房间和事件处理逻辑
-	Natayark/                 Natayark 账号授权相关逻辑
-	Scaffolding/              本地脚手架协议客户端/服务端
-	PCL.EasyTierPlugin.Test/  测试项目
-	EasyTierLobbyPlugin.cs    插件入口
-	plugin.json               PCL 插件清单
-	manifest.json             远程版本索引示例
+src/PclNex.EasyTierLobby/              插件源码
+tests/PclNex.EasyTierLobby.UiSmoke/    UI 与关键行为回归检查
+scripts/pack.ps1                       本地标准打包脚本
+.github/workflows/release.yml          Tag 发布工作流
+plugin.json                            PCL 插件加载清单
+manifest.json                          插件市场版本索引
 ```
 
 ## 开发环境
 
-需要安装 .NET SDK，并使用支持 Windows 目标框架的构建环境。
-
-当前项目目标框架：
+需要 Windows 和 .NET 10 SDK。仓库默认使用与远端 Action 相同的相邻目录布局：
 
 ```text
-net8.0-windows
+workspace/
+  PCL-CE/                       PCL2-Nex 主仓库
+  PCLNexOther/
+    PCL2-EasytierPlugin/        本仓库
 ```
 
-构建时需要：
-
-- .NET SDK
-- Windows targeting 支持
-- 与当前项目相邻的 PCL 主仓库源码
-
-当前插件仍引用主仓库中的本地项目：
-
-```text
-PCL.Core
-PCL.Plugin.Abstractions
-```
-
-后续如果需要做成完全独立的公开 SDK 插件，应继续把依赖的宿主能力抽象到 `PCL.Plugin.Abstractions`，再逐步移除对 `PCL.Core` 的直接引用。
+也可以通过 `PclHostRoot` 指定本机 PCL2-Nex 源码目录。
 
 ## 构建
 
-在插件项目目录运行：
-
 ```powershell
-dotnet build .\PCL.EasyTierPlugin.csproj --configuration Debug --property:Platform=AnyCPU
+dotnet build .\src\PclNex.EasyTierLobby\PclNex.EasyTierLobby.csproj `
+  --configuration Release `
+  --property:Platform=AnyCPU `
+  --property:PclHostRoot="C:\path\to\PCL2-Nex"
 ```
 
-如果在非 Windows 环境构建，可能需要额外传入：
+## 测试
 
 ```powershell
---property:EnableWindowsTargeting=true
+dotnet run --project .\tests\PclNex.EasyTierLobby.UiSmoke\PclNex.EasyTierLobby.UiSmoke.csproj `
+  --configuration Release `
+  --property:Platform=AnyCPU `
+  --property:PclHostRoot="C:\path\to\PCL2-Nex"
 ```
 
 ## 打包
 
-运行：
-
 ```powershell
-dotnet build .\PCL.EasyTierPlugin.csproj -t:PublishPlugin --configuration Release --property:Platform=AnyCPU
+.\scripts\pack.ps1 -Version 1.0.7 -PclHostRoot "C:\path\to\PCL2-Nex"
 ```
 
-打包产物会生成到：
+打包脚本会依次执行 `PublishPlugin` 和 UI smoke，并生成：
 
 ```text
 artifacts/pclnex.easytier/
+  PCL.EasyTierPlugin.dll
+  PCL.EasyTierPlugin.deps.json
+  System.Management.dll
+  plugin.json
+
+artifacts/pclnex.easytier-v1.0.7.pclx
 ```
 
-目录中至少包含：
+## 发布
 
-```text
-PCL.EasyTierPlugin.dll
-plugin.json
-```
+推送 `v*` 标签会触发 `.github/workflows/release.yml`：
 
-把该目录作为插件包目录放入 PCL 插件目录后，即可由启动器加载。
+1. 检出插件和 PCL2-Nex 主仓库。
+2. 构建插件并运行 UI smoke。
+3. 生成 `pclnex.easytier-v<version>.pclx`。
+4. 创建 GitHub Release。
+5. 计算真实 SHA-256 并更新 `manifest.json`。
+6. 将更新后的 `manifest.json` 和 `plugin.json` 提交回 `main`。
 
-## 插件清单
+`manifest.json` 不预写未发布版本的虚假哈希；新版本条目由发布工作流在包生成后写入。
 
-`plugin.json` 是启动器加载插件时读取的清单文件。当前内容的关键字段如下：
+## 安装
 
-```json
-{
-	"id": "pclnex.easytier",
-	"name": "EasyTier 联机大厅",
-	"version": "1.0.0",
-	"author": "Nex(XueLing)",
-	"runtime": "dotnet",
-	"entryAssembly": "PCL.EasyTierPlugin.dll",
-	"minApiVersion": "1.1.0"
-}
-```
+可以通过 PCL Nex 插件市场安装发布版本，也可以将 `artifacts/pclnex.easytier` 目录复制到 PCL 插件目录后重启启动器。
 
-修改插件 ID、版本号或最低 API 版本时，需要同步检查：
-
-- `EasyTierLobbyPlugin.cs` 中的 `[Plugin(...)]` 元数据。
-- `PCL.EasyTierPlugin.csproj` 中的 `PublishPlugin` 输出目录。
-- `manifest.json` 中的远程版本索引信息。
-- 状态存储 key 前缀是否需要迁移或兼容旧值。
-
-## 扩展点
-
-插件通过 PCL 的通用扩展点注册联机能力：
-
-```csharp
-PluginExtensionPoints.LobbyTunnelProvider
-PluginExtensionPoints.LobbyService
-```
-
-入口类会在加载时调用：
-
-```csharp
-extensions.RegisterLobbyTunnelProvider(provider);
-extensions.RegisterLobbyService(service, displayName: "EasyTier Lobby Service");
-```
-
-因此宿主需要提供 `RegisterExtension` 能力对应的扩展注册 API。
-
-## 状态与兼容
-
-插件当前使用的新状态 key 前缀为：
-
-```text
-Plugin.pclnex.easytier.
-```
-
-为了兼容早期构建，插件仍会尝试读取旧前缀：
-
-```text
-Plugin.pcl.easytier.lobby.
-```
-
-这样可以避免用户升级后丢失 EULA 状态、公告缓存或账号刷新 token。
-
-## 测试
-
-测试项目位于：
-
-```text
-PCL.EasyTierPlugin.Test/
-```
-
-可以运行：
-
-```powershell
-dotnet build .\PCL.EasyTierPlugin.Test\PCL.EasyTierPlugin.Test.csproj --configuration Debug --property:Platform=AnyCPU
-```
-
-## 说明
-
-这是 PCL Nex 插件生态的一部分。插件运行在启动器进程内，不是安全沙箱；请只加载可信来源的插件包。
+插件运行在启动器进程内，不是安全沙箱，请只加载可信来源的插件包。
