@@ -22,7 +22,7 @@
       "downloads": {
         "anycpu": {
           "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v2.0.0/pclnex.easytier-2.0.0-anycpu.pclx",
-          "sha256": "b33531ea3d22c1cba91e3ea414871bfb86313554bcaec7bcfb773e03f082c884"
+          "sha256": "3024d9857f269a2c4f42a162f02795d9c705567f39d367d479b5c24b4dee3c2e"
         }
       },
       "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v2.0.0"
