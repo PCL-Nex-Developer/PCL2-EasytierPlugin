@@ -1,52 +1,31 @@
 {
+  "id": "pclnex.easytier",
+  "name": "EasyTier 联机大厅",
+  "author": {
+    "githubLogin": "PCL-Nex-Developer",
+    "displayName": "PCL Nex Developer"
+  },
+  "description": "将 PCL Community Edition 的 EasyTier 联机大厅作为独立 PCL.Mixin 插件提供。",
+  "readmeUrl": "README.md",
+  "repository": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin",
+  "homepageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin",
+  "group": "联机",
+  "tags": [
+    "minecraft",
+    "multiplayer",
+    "easytier"
+  ],
   "versions": [
     {
-      "version": "1.0.7",
-      "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v1.0.7/pclnex.easytier-v1.0.7.pclx",
-      "sha256": "6722ff163339a1003ab495c4c733110ee3376995d2e88b68ccb59b536fe12ac9",
-      "minApiVersion": "1.2.1.0",
-      "minHostVersion": "3.0.0",
-      "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v1.0.7"
-    },
-    {
-      "version": "1.0.6",
-      "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v1.0.6/pclnex.easytier-v1.0.6.pclx",
-      "sha256": "ac27f09d9e7dfdc3e5273f0736923ade257462de75fb631d05776a664974865c",
-      "minApiVersion": "1.1.0",
-      "minHostVersion": "3.0.0",
-      "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v1.0.6"
-    },
-    {
-      "version": "1.0.5",
-      "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v1.0.5/pclnex.easytier-v1.0.5.pclx",
-      "sha256": "f1524fb463ab2509dde02ae12562a18d24207e336429dc30b075e6ae82ca5802",
-      "minApiVersion": "1.1.0",
-      "minHostVersion": "3.0.0",
-      "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v1.0.5"
-    },
-    {
-      "version": "1.0.4",
-      "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v1.0.4/pclnex.easytier-v1.0.4.pclx",
-      "sha256": "3e2002bc407f56861635260ef5365d77c92bfa7a98612a106dc8d70bda231b35",
-      "minApiVersion": "1.1.0",
-      "minHostVersion": "3.0.0",
-      "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v1.0.4"
-    },
-    {
-      "version": "1.0.3",
-      "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v1.0.3/pclnex.easytier-v1.0.3.pclx",
-      "sha256": "469a38c25f33b694988fa69fdb8f44bd5d0af638b853c3c4e4cd13ab5dd4170d",
-      "minApiVersion": "1.1.0",
-      "minHostVersion": "3.0.0",
-      "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v1.0.3"
-    },
-    {
-      "version": "1.0.0",
-      "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v1.0.0/pclnex.easytier-v1.0.0.pclx",
-      "sha256": "aa70780a2f960b5ad6b12a682f24551ba19792bc4e2673603a6908ada6b5ad9f",
-      "minApiVersion": "1.1.0",
-      "minHostVersion": "3.0.0",
-      "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v1.0.0"
+      "version": "2.0.0",
+      "pclCoreVersion": "2026.07.1",
+      "downloads": {
+        "anycpu": {
+          "packageUrl": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/download/v2.0.0/pclnex.easytier-2.0.0-anycpu.pclx",
+          "sha256": "b33531ea3d22c1cba91e3ea414871bfb86313554bcaec7bcfb773e03f082c884"
+        }
+      },
+      "releaseNotes": "https://github.com/PCL-Nex-Developer/PCL2-EasytierPlugin/releases/tag/v2.0.0"
     }
   ]
 }

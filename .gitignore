@@ -45,6 +45,10 @@ ScaffoldingReadMe.txt
 *~
 CodeCoverage/
 
+# Local porting references and isolated desktop test runtimes
+.desktop*/
+.reference/
+
 # MSBuild Binary and Structured Log
 *.binlog
 

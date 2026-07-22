@@ -274,9 +274,7 @@ public class LobbyService() : GeneralService("lobby", "LobbyService")
                     var pingRes = await pinger.PingAsync(timeoutCts.Token).ConfigureAwait(false);
 
                     if (pingRes is null)
-                    {
-                        throw new ArgumentNullException(nameof(pingRes), "Failed to ping minecraft entity.");
-                    }
+                        return;
 
                     var worldName = Lang.Text("Link.Lobby.WorldNameFormat",
                         pingRes.Description,
@@ -297,7 +295,7 @@ public class LobbyService() : GeneralService("lobby", "LobbyService")
                 }
                 catch (Exception ex)
                 {
-                    LogWrapper.Error(ex, "LobbyService", $"Pinging port {info.Address.Port} failed.");
+                    LogWrapper.Debug(ex, "LobbyService", $"Pinging port {info.Address.Port} failed.");
                 }
             }, token);
 

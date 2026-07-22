@@ -585,7 +585,8 @@ public partial class PageToolsGameLink
                     // 版本过滤
                     var minVer = notice["minVer"].ToObject<double>();
                     var maxVer = notice["maxVer"].ToObject<double>();
-                    if (ModBase.versionCode < minVer || maxVer < 999 && ModBase.versionCode > maxVer) continue;
+                    const double currentVersionCode = 999;
+                    if (currentVersionCode < minVer || maxVer < 999 && currentVersionCode > maxVer) continue;
 
                     // 类型映射
                     var type = LinkAnnounceType.Notice;
@@ -901,11 +902,6 @@ public partial class PageToolsGameLink
     private static async Task RefreshLocalWorldsAsync()
     {
         await LobbyService.DiscoverWorldAsync();
-        foreach (var world in global::PclNex.EasyTierLobby.Services.EasyTierLobbyService.FindWorlds())
-        {
-            if (LobbyService.DiscoveredWorlds.All(existing => existing.Port != world.Port))
-                LobbyService.DiscoveredWorlds.Add(new FoundWorld(world.Name, world.Port));
-        }
     }
 
     private async void BtnInputPort_Click(object sender, MouseButtonEventArgs e)
@@ -1210,7 +1206,7 @@ public partial class PageToolsGameLink
     // 复制大厅编号
     private void BtnFinishCopy_Click(object sender, ModBase.RouteEventArgs routeEventArgs)
     {
-        ModBase.ClipboardSet(LabFinishId.Text);
+        CeClipboard.SetText(LabFinishId.Text);
     }
 
     // 复制 IP
@@ -1229,7 +1225,7 @@ public partial class PageToolsGameLink
             Lang.Text("Tools.GameLink.CopyIp.Title"),
             Lang.Text("Common.Action.Copy"),
             Lang.Text("Tools.GameLink.CopyIp.Back"),
-            button1Action: () => ModBase.ClipboardSet(ip));
+            button1Action: () => CeClipboard.SetText(ip));
     }
 
     #endregion

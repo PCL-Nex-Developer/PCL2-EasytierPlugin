@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "PclNex.EasyTierLobby.Mixins",
+  "mixins": [
+    "PageToolsLeftMixin",
+    "PageSetupLeftMixin",
+    "PageToolsTestMixin"
+  ],
+  "priority": 1100,
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

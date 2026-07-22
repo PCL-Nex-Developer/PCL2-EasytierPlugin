@@ -2,20 +2,17 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PclHostRoot Condition="'$(PclHostRoot)' == ''">$(MSBuildThisFileDirectory)..\..\..\..\PCL-CE</PclHostRoot>
+    <AssemblyName>PclNex.EasyTierLobby.UiSmoke</AssemblyName>
+    <PclHostRoot Condition="'$(PclHostRoot)' == ''">$(MSBuildThisFileDirectory)..\..\..\PCL2-Nex</PclHostRoot>
+    <PclCorePath Condition="'$(PclCorePath)' == ''">$(PclHostRoot)\PCL.Core\bin\Release-AnyCPU\net8.0-windows\PCL.Core.dll</PclCorePath>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PclNex.EasyTierLobby\PclNex.EasyTierLobby.csproj" />
-    <ProjectReference Include="$(PclHostRoot)\PCL.Core\PCL.Core.csproj" />
     <ProjectReference Include="$(PclHostRoot)\Plain Craft Launcher 2\Plain Craft Launcher 2.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="$(PclHostRoot)\Plain Craft Launcher 2\metadata.json"
-                      LogicalName="PCL.metadata.json" />
   </ItemGroup>
 </Project>

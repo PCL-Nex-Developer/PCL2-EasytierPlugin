@@ -9,10 +9,11 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyName>PCL.EasyTierPlugin</AssemblyName>
     <RootNamespace>PclNex.EasyTierLobby</RootNamespace>
-    <LangVersion>preview</LangVersion>
-    <NoWarn>$(NoWarn);CS0436</NoWarn>
-    <PluginVersion Condition="'$(PluginVersion)' == ''">1.0.7.0</PluginVersion>
-    <PclHostRoot Condition="'$(PclHostRoot)' == ''">$(MSBuildThisFileDirectory)..\..\..\..\PCL-CE</PclHostRoot>
+    <LangVersion>latest</LangVersion>
+    <NoWarn>$(NoWarn);CS0109;CS0168;CS0436;CS8600;CS8601;CS8602;CS8604;CS8618;CS8622;CS8625</NoWarn>
+    <PluginVersion Condition="'$(PluginVersion)' == ''">2.0.0.0</PluginVersion>
+    <PclCoreVersion Condition="'$(PclCoreVersion)' == ''">2026.07.1</PclCoreVersion>
+    <PclHostRoot Condition="'$(PclHostRoot)' == ''">$(MSBuildThisFileDirectory)..\..\..\PCL2-Nex</PclHostRoot>
   </PropertyGroup>
 
   <Target Name="GeneratePluginBuildVersion" BeforeTargets="CoreCompile">
@@ -24,6 +25,7 @@
       <PluginBuildVersionLine Include="internal static class ThisAssembly" />
       <PluginBuildVersionLine Include="{" />
       <PluginBuildVersionLine Include="    public const string PluginVersion = &quot;$(PluginVersion)&quot;%3B" />
+      <PluginBuildVersionLine Include="    public const string PclCoreVersion = &quot;$(PclCoreVersion)&quot;%3B" />
       <PluginBuildVersionLine Include="}" />
     </ItemGroup>
     <WriteLinesToFile File="$(PluginBuildVersionSource)" Lines="@(PluginBuildVersionLine)" Overwrite="true" Encoding="UTF-8" />
@@ -38,20 +40,11 @@
 
   <ItemGroup>
     <ProjectReference Include="$(PclHostRoot)\PCL.Core\PCL.Core.csproj" Private="false" />
-    <ProjectReference Include="$(PclHostRoot)\PCL.Plugin.Abstractions\PCL.Plugin.Abstractions.csproj" Private="false" />
     <ProjectReference Include="$(PclHostRoot)\Plain Craft Launcher 2\Plain Craft Launcher 2.csproj" Private="false" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="System.Text.Json.Nodes" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="CeOriginal\**\*.cs" />
-    <Page Remove="CeOriginal\**\*.xaml" />
-    <Compile Remove="CeUi\Controls\**\*.cs" />
-    <Page Remove="CeUi\Controls\**\*.xaml" />
-    <Compile Include="CeOriginal\Modules\ModLink.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,15 +59,20 @@
   <Target Name="PublishPlugin" DependsOnTargets="Build">
     <PropertyGroup>
       <PluginPackageDir>$(MSBuildProjectDirectory)\..\..\artifacts\pclnex.easytier\</PluginPackageDir>
+      <PluginLibDir>$(PluginPackageDir)lib\</PluginLibDir>
+      <PluginMixinDir>$(PluginPackageDir)mixins\</PluginMixinDir>
     </PropertyGroup>
     <RemoveDir Directories="$(PluginPackageDir)" />
-    <MakeDir Directories="$(PluginPackageDir)" />
+    <MakeDir Directories="$(PluginLibDir);$(PluginMixinDir)" />
     <ItemGroup>
       <PluginPackageFiles Include="$(TargetDir)$(TargetFileName)" />
+      <PluginPackageFiles Include="$(TargetDir)$(TargetName).pdb" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
       <PluginPackageFiles Include="$(TargetDir)$(TargetName).deps.json" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
       <PluginPackageFiles Include="$(TargetDir)System.Management.dll" Condition="Exists('$(TargetDir)System.Management.dll')" />
-      <PluginPackageFiles Include="$(MSBuildProjectDirectory)\..\..\plugin.json" />
     </ItemGroup>
-    <Copy SourceFiles="@(PluginPackageFiles)" DestinationFolder="$(PluginPackageDir)" />
+    <Copy SourceFiles="@(PluginPackageFiles)" DestinationFolder="$(PluginLibDir)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\..\..\plugin.json" DestinationFolder="$(PluginPackageDir)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\..\..\README.md" DestinationFolder="$(PluginPackageDir)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\..\..\mixins\pclnex.easytier.mixins.json" DestinationFolder="$(PluginMixinDir)" />
   </Target>
 </Project>

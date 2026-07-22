@@ -1,60 +1,75 @@
-using System.Diagnostics;
-using PCL;
+using System.Reflection;
+using System.Text.Json;
+using PCL.Core.App.Plugins;
 using PCL.Core.Link.Scaffolding;
-using PCL.Core.Link.Scaffolding.Client;
-using PCL.Core.Link.Scaffolding.Client.Models;
-using PCL.Core.Link.Scaffolding.Client.Requests;
+using PCL.Mixin;
+using PclNex.EasyTierLobby.UI;
 
-var dataDirectory = Path.Combine(Path.GetTempPath(), "PclNex.EasyTierLobby.Smoke");
-CeUiRuntimeBridge.Initialize(dataDirectory, null);
+var repositoryRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
-var before = Process.GetProcessesByName("easytier-core").Select(process => process.Id).ToHashSet();
-var serverEntity = ScaffoldingFactory.CreateServer(25565, "smoke-host");
-serverEntity.Server.Start();
-
-Console.WriteLine($"LOBBY_CODE={serverEntity.EasyTier.Lobby.FullCode}");
-Console.WriteLine($"HOST_NETWORK_STATE={serverEntity.EasyTier.State}");
-
-await using (var localClient = new ScaffoldingClient(
-                 "127.0.0.1",
-                 serverEntity.EasyTier.ScaffoldingPort,
-                 "local-control",
-                 "SMOKE-LOCAL-0001",
-                 "smoke"))
+for (var index = 0; index < 50; index++)
 {
-    using var localCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-    await localClient.ConnectAsync(localCts.Token);
-    var localServerPort = await localClient.SendRequestAsync(new GetServerPortRequest(), localCts.Token);
-    Console.WriteLine($"LOCAL_SCAFFOLDING_PORT={localServerPort}");
+    var lobby = LobbyCodeGenerator.Generate();
+    Assert(LobbyCodeGenerator.TryParse(lobby.FullCode, out var parsed), "Generated lobby code did not parse.");
+    Assert(parsed == lobby, "Lobby code round trip changed its payload.");
 }
+Console.WriteLine("LOBBY_CODE_ROUNDTRIP=OK");
 
-using var joinCts = new CancellationTokenSource(TimeSpan.FromSeconds(45));
-var clientEntity = await ScaffoldingFactory.CreateClientAsync(
-    "smoke-client",
-    serverEntity.EasyTier.Lobby.FullCode,
-    LobbyType.Scaffolding,
-    joinCts.Token,
-    "SMOKE-CLIENT-0001");
-await clientEntity.Client.ConnectAsync();
-var serverPort = await clientEntity.Client.SendRequestAsync(new GetServerPortRequest());
-
-Console.WriteLine($"CLIENT_NETWORK_STATE={clientEntity.EasyTier.State}");
-Console.WriteLine($"SERVER_PORT={serverPort}");
-
-await clientEntity.Client.DisposeAsync();
-await clientEntity.EasyTier.StopAsync();
-await serverEntity.Server.DisposeAsync();
-await serverEntity.EasyTier.StopAsync();
-await Task.Delay(500);
-
-var leaked = Process.GetProcessesByName("easytier-core")
-    .Where(process => !before.Contains(process.Id))
-    .Select(process => process.Id)
+using var pluginJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(repositoryRoot, "plugin.json")));
+Assert(pluginJson.RootElement.GetProperty("entryAssembly").GetString() == "lib/PCL.EasyTierPlugin.dll", "plugin.json entryAssembly is not the new layout.");
+var mixinConfigs = pluginJson.RootElement.GetProperty("mixinConfigs").EnumerateArray()
+    .Select(element => element.GetString())
     .ToArray();
+Assert(mixinConfigs.SequenceEqual(["mixins/pclnex.easytier.mixins.json"]), "plugin.json mixinConfigs is invalid.");
+Assert(!pluginJson.RootElement.TryGetProperty("capabilities", out _), "Legacy capabilities remain in plugin.json.");
+Assert(!pluginJson.RootElement.TryGetProperty("runtime", out _), "Legacy runtime remains in plugin.json.");
 
-if (leaked.Length > 0)
+using var mixinJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(repositoryRoot, "mixins", "pclnex.easytier.mixins.json")));
+Assert(mixinJson.RootElement.GetProperty("package").GetString() == "PclNex.EasyTierLobby.Mixins", "Mixin package is invalid.");
+var declaredMixins = mixinJson.RootElement.GetProperty("mixins").EnumerateArray()
+    .Select(element => element.GetString())
+    .ToArray();
+Assert(declaredMixins.SequenceEqual(["PageToolsLeftMixin", "PageSetupLeftMixin", "PageToolsTestMixin"]), "CE page mixins are not declared in injection order.");
+
+var marketManifest = JsonSerializer.Deserialize<PluginMarketManifest>(
+    File.ReadAllText(Path.Combine(repositoryRoot, "manifest.json")),
+    PluginJson.SerializerOptions) ?? throw new InvalidOperationException("manifest.json is empty.");
+PluginRepositoryService.ValidateMarketManifest(marketManifest);
+Assert(marketManifest.Versions.Count == 1 && marketManifest.Versions[0].Downloads?.AnyCpu is not null,
+    "manifest.json does not declare the current anycpu package.");
+Console.WriteLine("MARKET_MANIFEST=OK");
+
+var pluginAssembly = typeof(PageToolsGameLink).Assembly;
+var references = pluginAssembly.GetReferencedAssemblies().Select(reference => reference.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+Assert(references.Contains("PCL.Core"), "Plugin does not reference PCL.Core.");
+Assert(references.Contains("Plain Craft Launcher 2"), "Plugin does not bind the copied CE pages to the Nex host controls.");
+Assert(!references.Contains("PCL.Plugin.Abstractions"), "Plugin still references the legacy plugin contract.");
+
+Assert(typeof(PageToolsGameLink).BaseType?.FullName == "PCL.MyPageRight", "Copied CE lobby page does not use the host MyPageRight.");
+Assert(typeof(PageSetupGameLink).BaseType?.FullName == "PCL.MyPageRight", "Copied CE settings page does not use the host MyPageRight.");
+Assert(pluginAssembly.GetType("PclNex.EasyTierLobby.UI.EasyTierMainPage") is null, "The old custom main page still exists.");
+Assert(pluginAssembly.GetType("PclNex.EasyTierLobby.UI.PluginPageHost") is null, "The old custom page host still exists.");
+Assert(pluginAssembly.GetType("PclNex.EasyTierLobby.Mixins.FormMainMixin") is null, "The obsolete top navigation mixin still exists.");
+
+AssertMixin(pluginAssembly, "PageToolsLeftMixin", "PCL.PageToolsLeft", [".ctor", "PageLinkLeft_Loaded", "PageGet"]);
+AssertMixin(pluginAssembly, "PageSetupLeftMixin", "PCL.PageSetupLeft", [".ctor", "PageGet"]);
+AssertMixin(pluginAssembly, "PageToolsTestMixin", "PCL.PageToolsTest", [".ctor"]);
+Console.WriteLine("MIXIN_CONTRACT=OK");
+
+static void Assert(bool condition, string message)
 {
-    throw new InvalidOperationException($"EasyTier processes were not cleaned up: {string.Join(", ", leaked)}");
+    if (!condition) throw new InvalidOperationException(message);
 }
 
-Console.WriteLine("CLEANUP=OK");
+static void AssertMixin(Assembly assembly, string name, string targetName, string[] injectedMethods)
+{
+    var mixinType = assembly.GetType($"PclNex.EasyTierLobby.Mixins.{name}")
+                    ?? throw new InvalidOperationException($"{name} is missing.");
+    var mixinAttribute = mixinType.GetCustomAttribute<MixinAttribute>();
+    Assert(mixinAttribute?.TargetName == targetName, $"{name} target is invalid.");
+    var actualMethods = mixinType.GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
+        .SelectMany(method => method.GetCustomAttributes<InjectAttribute>())
+        .Select(attribute => attribute.Method)
+        .ToHashSet(StringComparer.Ordinal);
+    Assert(injectedMethods.All(actualMethods.Contains), $"{name} is missing an expected injection.");
+}

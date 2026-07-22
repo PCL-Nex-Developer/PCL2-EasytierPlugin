@@ -15,7 +15,6 @@ using PCL.Core.Link.Lobby;
 using PCL.Core.Link.Natayark;
 using PCL.Core.Link.Scaffolding.EasyTier;
 using PCL.Core.UI;
-using PCL.Plugin.Abstractions;
 using PclNex.EasyTierLobby.Services;
 
 namespace PCL;
@@ -26,12 +25,9 @@ public static class CeUiRuntimeBridge
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "PclNex.EasyTierLobby");
 
-    public static IPluginLogger? Logger { get; private set; }
-
-    public static void Initialize(string dataDirectory, IPluginLogger? logger)
+    public static void Initialize(string dataDirectory)
     {
         DataDirectory = dataDirectory;
-        Logger = logger;
         Directory.CreateDirectory(DataDirectory);
         LinkPersistence.Initialize(DataDirectory);
         OriginalSecrets.ApplyToProcessEnvironment();
@@ -59,7 +55,7 @@ public static class CeUiRuntimeBridge
             File.Copy(sourcePath, Path.Combine(EasyTierDirectory, Path.GetFileName(sourcePath)), overwrite: true);
         }
 
-        Logger?.Info($"Migrated EasyTier files to host directory: {EasyTierDirectory}");
+        ModBase.Log($"[Link] 已迁移 EasyTier 文件：{EasyTierDirectory}");
     }
 }
 
